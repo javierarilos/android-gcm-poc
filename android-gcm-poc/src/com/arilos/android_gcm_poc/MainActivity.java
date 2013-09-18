@@ -7,16 +7,25 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.EditText;
 
-//http://developer.android.com/google/gcm/gs.html#libs
-//sending a gcm message from command line:
-//curl --header "Authorization:key=AIzaSyAU2xRA8uQLVcH90RRLjay98QCQbybBAzw" --header "Content-Type:application/json" "https://android.googleapis.com/gcm/send" --data '{"data": { "hello": "android from sprayer 27" }, "registration_ids":["APA91bFD5sdYO4mSNBWwWT_hotMit-NAfcSQiqSE-TW8sBHASGKNLrwA8YBMaBnvLA8w3vaeylYeennnvjISSodzcnTMfv3zXiSpsjRZXEB80ErpoI-Y3LI7OzQJ9_TOFIXkPz_56jdm7YQM2D8_zK6gvowSECdZ6dI0e2bZoeJ9EpHh2ROLPJI"]}'{"multicast_id":4965462207190267259,"success":1,"failure":0,"canonical_ids":0,"results":[{"message_id":"0:1379512056945380%e56d3d5df9fd7ecd"}]}
 
+/**
+ * @author javier.arilos
+ * 
+ * For using this code, you will need:
+ * PROJECT_NUMBER
+ * AUTHORIZATION-KEY
+ * see: http://developer.android.com/google/gcm/gs.html#libs for getting this keys.
+ * 
+ * You will also need some phones registration-id's, which result from the android device register.
+ * sending a gcm message from command line:
+ * curl --header "Authorization:key=<YOUR-AUTHORIZATION-KEY-HERE>" --header "Content-Type:application/json" "https://android.googleapis.com/gcm/send" --data '{"data": { "hello": "android from sprayer 27" }, "registration_ids":["<A-DEVICE-REGISTRATION-ID>"]}'
+ * 
+ */
 public class MainActivity extends Activity {
 
 	public static final String EXTRA_MENSAJE = "com.arilos.android_gcm_poc.MENSAJE";
-	protected static final String PROJECT_NUMBER = "439693372930";
+	protected static final String PROJECT_NUMBER = "<YOUR-PROJECT-NUMBER>";
 	StringBuilder text = new StringBuilder("");
-	private String registrationId = null;
 	private static MainActivity instance = null;
 	private PocUtil util = PocUtil.getInstance(this);
 
