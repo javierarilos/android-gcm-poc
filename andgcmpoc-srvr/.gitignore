@@ -1,4 +1,6 @@
+#local installation and run
 YourAppName.egg-info/
 dist/
-*.pyo
-*.pyc
+
+#local development: eg: pycharm dirs
+.idea/
