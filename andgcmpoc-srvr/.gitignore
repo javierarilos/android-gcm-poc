@@ -1,0 +1,4 @@
+YourAppName.egg-info/
+dist/
+*.pyo
+*.pyc
