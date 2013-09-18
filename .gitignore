@@ -20,6 +20,9 @@ local.properties
 .project
 .settings/
 
-@ Python binaries
+# Python binaries
 *.pyc
 *.pyo
+dist/
+
+
