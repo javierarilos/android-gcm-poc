@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name" translatable="false">android-gcm-poc</string>
+    <string name="action_settings" translatable="false">Settings</string>
+    <string name="button_register" translatable="false">register</string>
+
+</resources>
