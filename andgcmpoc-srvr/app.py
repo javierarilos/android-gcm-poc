@@ -59,6 +59,11 @@ if __name__ == '__main__':
         body = "".join(request.body)
         return {"result": "OK", "recvr": get_recvr(domain, recvr_id), "body": body}
 
+    @app.get("/time")
+    def get_time():
+        from time import time
+        return str(time())
+
     @app.error(404)
     def not_found(err):
         return "(404) Url not found. {}".format(request.url)
