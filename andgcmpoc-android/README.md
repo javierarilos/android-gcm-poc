@@ -6,8 +6,7 @@ This is the Android application for the android-gcm-poc project.
 Getting started, some references: 
 
 For using this code, you will need to add to **MainActivity.java**:
-* PROJECT_NUMBER
-* AUTHORIZATION-KEY
+* PROJECT_NUMBER: needed to register a device to google GCM.
 see: http://developer.android.com/google/gcm/gs.html#libs for getting this keys.
 
  
