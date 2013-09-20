@@ -25,20 +25,25 @@ if __name__ == '__main__':
     port = int(os.getenv('OPENSHIFT_PYTHON_PORT', '9898'))
 
     from bottle import Bottle, run, request, response
+    import requests, json
 
+    session = requests.Session()
     app = Bottle()
-    # recvrs is a dictionary for receivers.
-    # keys are: domain.recvr_id, values are dictionaries: {domain: <domain>, recvr_id: <recvr_id>, token: <token>}
+    """ recvrs is a dictionary for receivers.
+    keys are: domain.recvr_id, values are dictionaries: {domain: <domain>, recvr_id: <recvr_id>, token: <token>}"""
     recvrs = {}
     SEPARATOR = '/'
 
     def key(domain, recvr_id):
         return domain + SEPARATOR + recvr_id
 
+    def _get_registration(domain, recvr_id):
+        return recvrs[key(domain, recvr_id)]
+
     # REGISTER RECVR:
     # curl -v -X POST http://androidgcmpoc-corralito.rhcloud.com/register/do1/re1/to1
     @app.post("/register/<domain>/<recvr_id>/<token>")
-    def register(domain, recvr_id, token):
+    def post_register(domain, recvr_id, token):
         recvrs[key(domain, recvr_id)] = {'domain': domain, 'recvr_id': recvr_id, 'token': token}
         return {"result": "OK"}
 
@@ -47,22 +52,48 @@ if __name__ == '__main__':
     @app.get("/register/<domain>/<recvr_id>")
     def get_recvr(domain, recvr_id):
         try:
-            return recvrs[key(domain, recvr_id)]
+            return _get_registration(domain, recvr_id)
         except KeyError:
             response.status = 404
             return "Not registered: {}{}{}".format(domain, SEPARATOR, recvr_id)
 
+    # GET ALL RECVRS:
+    # curl -v -X GET http://androidgcmpoc-corralito.rhcloud.com/register/
+    @app.get("/register")
+    def get_all_recvrs():
+        return str(recvrs.values())
+
     # SEND TO RECVR:
     # curl -v -X POST -d "pushing around the world" http://androidgcmpoc-corralito.rhcloud.com/send/do1/re1
     @app.post("/send/<domain>/<recvr_id>")
-    def send(domain, recvr_id):
+    def post_send(domain, recvr_id):
         body = "".join(request.body)
-        return {"result": "OK", "recvr": get_recvr(domain, recvr_id), "body": body}
+
+        try:
+            registration = _get_registration(domain, recvr_id)
+            registration_ids = [registration["token"]]
+            body_dict = json.loads(body)
+            data = json.dumps({"data": body_dict, "registration_ids": registration_ids})
+            r = session.post("https://android.googleapis.com/gcm/send",
+                             headers={"Authorization": "key=AIzaSyAU2xRA8uQLVcH90RRLjay98QCQbybBAzw",
+                                      "Content-Type": "application/json"},
+                             data=data)
+            print("Response from google : status '{}', content '{}' ".format(r.status_code, r.content))
+        except KeyError, ke:
+            response.status = 404
+            return {"result": "KO", "reason": "Not registered: {}{}{}".format(domain, SEPARATOR, recvr_id)}
+        except ValueError, ve:
+                response.status = 400
+                return {"result": "KO",
+                        "reason": "Expecting valid JSON, body: '{}' error: '{}' ".format(body, ve.message)}
+        return {"result": "OK" if r.status_code == 200 else "KO",
+                "recvr": registration,
+                "response": str(r.content)}
 
     @app.get("/time")
     def get_time():
         from time import time
-        return str(time())
+        return "current time is: "+str(time())
 
     @app.error(404)
     def not_found(err):

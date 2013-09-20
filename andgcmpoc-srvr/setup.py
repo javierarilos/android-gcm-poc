@@ -6,5 +6,5 @@ setup(name='android-gcm-poc',
       author='jarias',
       author_email='jarias@tid.es',
       url='http://www.python.org/sigs/distutils-sig/',
-      install_requires=['bottle'],
+      install_requires=['bottle', 'requests'],
       )

@@ -46,7 +46,7 @@ public class PocUtil {
 	private PocUtil() {
 	}
 
-	public AsyncTask<String, Void, Integer> postRegistrationToBackend(
+	public AsyncTask<String, Void, Integer> backgroundPostRegistrationToBackend(
 			String recvr_id, String domain, String registrationId) {
 		return new AsyncTask<String, Void, Integer>() {
 			@Override
@@ -61,32 +61,37 @@ public class PocUtil {
 				String domain = args[1];
 				String registrationId = args[2];
 
-				try {
-					HttpClient httpclient = new DefaultHttpClient();
-					HttpPost httppost = new HttpPost(
-							String.format(
-									"http://androidgcmpoc-corralito.rhcloud.com/register/%s/%s/%s",
-									recvr_id, domain, registrationId));
-					StringEntity entity = new StringEntity(
-							String.format(
-									"{\"user\":\"%s\",\"tag\":\"%s\", \"body\":\"%s\"}",
-									recvr_id, domain, registrationId));
-					httppost.setEntity(entity);
-
-					// Execute HTTP Post Request
-					HttpResponse response = httpclient.execute(httppost);
-					System.out.println("RESPONSE ::: "
-							+ response.getStatusLine().getStatusCode()
-							+ EntityUtils.toString(response.getEntity()));
-					return response.getStatusLine().getStatusCode();
-				} catch (ClientProtocolException e) {
-					System.out.println("CLIENT PROTOCOL EXCEPTION ::: " + e);
-				} catch (IOException e) {
-					System.out.println("ioEXCEPTION ::: " + e);
-				}
-				return -1;
+				return postRegistrationToBackend(recvr_id, domain,
+						registrationId);
 			}
 		}.execute(recvr_id, domain, registrationId);
+	}
+
+	private Integer postRegistrationToBackend(String recvr_id, String domain,
+			String registrationId) {
+		try {
+			HttpClient httpclient = new DefaultHttpClient();
+			HttpPost httppost = new HttpPost(
+					String.format(
+							"http://androidgcmpoc-corralito.rhcloud.com/register/%s/%s/%s",
+							recvr_id, domain, registrationId));
+			StringEntity entity = new StringEntity(String.format(
+					"{\"user\":\"%s\",\"tag\":\"%s\", \"body\":\"%s\"}",
+					recvr_id, domain, registrationId));
+			httppost.setEntity(entity);
+
+			// Execute HTTP Post Request
+			HttpResponse response = httpclient.execute(httppost);
+			System.out.println("RESPONSE ::: "
+					+ response.getStatusLine().getStatusCode()
+					+ EntityUtils.toString(response.getEntity()));
+			return response.getStatusLine().getStatusCode();
+		} catch (ClientProtocolException e) {
+			System.out.println("CLIENT PROTOCOL EXCEPTION ::: " + e);
+		} catch (IOException e) {
+			System.out.println("ioEXCEPTION ::: " + e);
+		}
+		return -1;
 	}
 
 	/**
@@ -196,67 +201,64 @@ public class PocUtil {
 		return true;
 	}
 
-	public AsyncTask<Void, Void, String> registerToGoogle() {
+	public AsyncTask<Void, Void, String> backgroundRegisterToGoogle() {
 		return new AsyncTask<Void, Void, String>() {
 			@Override
 			protected String doInBackground(Void... params) {
-				String msg = "";
-				try {
-					GoogleCloudMessaging gcm = GoogleCloudMessaging
-							.getInstance(context);
-					long start = System.currentTimeMillis();
-					String registrationId = gcm.register(PROJECT_NUMBER);
-					long end = System.currentTimeMillis();
-					System.out.println(String.format(
-							"Device registered in %d ms, registration ID=%s",
-							end - start, registrationId));
-					return registrationId;
-				} catch (IOException ex) {
-					msg = "Error : REGISTERING TO GOOGLE" + ex.getMessage();
-					System.out.println(msg + ex.getStackTrace());
-					// TODO: If there is an error, don't just keep trying to
-					// register. Require the user to click a button again, or
-					// perform exponential back-off.
-				}
-				return null;
+				return registerToGoogle();
 			}
+
 		}.execute(null, null, null);
 	}
 
-	public Integer register(String recvr_id, String domain) {
-		String googleRegId = null;
-		Integer backendResult = -1;
+	private String registerToGoogle() {
+		String msg = "";
+		try {
+			GoogleCloudMessaging gcm = GoogleCloudMessaging
+					.getInstance(context);
+			long start = System.currentTimeMillis();
+			String registrationId = gcm.register(PROJECT_NUMBER);
+			long end = System.currentTimeMillis();
+			System.out.println(String.format(
+					"Device registered in %d ms, registration ID=%s", end
+							- start, registrationId));
+			return registrationId;
+		} catch (IOException ex) {
+			msg = "Error : REGISTERING TO GOOGLE" + ex.getMessage();
+			System.out.println(msg + ex.getStackTrace());
+			// TODO: If there is an error, don't just keep trying to
+			// register. Require the user to click a button again, or
+			// perform exponential back-off.
+		}
+		return null;
+	}
 
+	public Integer register(String recvr_id, String domain) {
+		// tries to assure registration to google and our backend.
+		Integer backendResult = -1;
 		storeSprayerId(recvr_id, domain);
 
 		String registrationId = getRegistrationId();
-		registrationId = null;
 		if (registrationId == null || registrationId.length() == 0) {
 			// unregistered. do the register process. 1st register to google
-			try {
-				AsyncTask<Void, Void, String> rg = registerToGoogle();
-				googleRegId = rg.get();
-
-				if (googleRegId != null && googleRegId.length() == 0) {
-					// register to google was successful, update registration
-					// id.
-					storeRegistrationId(googleRegId);
-					finishRegister();
-				} else {
-					System.out
-							.println(">> register was not successful to google: googleRegId : "
-									+ googleRegId);
-				}
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ExecutionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			registrationId = registerToGoogle();
+			if (registrationId != null && registrationId.length() > 0) {
+				// register to google was successful, update registration
+				// id.
+				storeRegistrationId(registrationId);
+			} else {
+				System.out
+						.println(">> register was not successful to google: googleRegId : "
+								+ registrationId);
 			}
 		}
-		return backendResult;
 
+		if (registrationId != null && registrationId.length() > 0) {
+			// registration to google was successful, finish register.
+			backendResult = postRegistrationToBackend(recvr_id, domain,
+					registrationId);
+		}
+		return backendResult;
 	}
 
 	public Integer finishRegister() {
@@ -266,7 +268,7 @@ public class PocUtil {
 		String recvr_id = getReceiverId();
 		String domain = getDomain();
 
-		AsyncTask<String, Void, Integer> rb = postRegistrationToBackend(
+		AsyncTask<String, Void, Integer> rb = backgroundPostRegistrationToBackend(
 				recvr_id, domain, registrationId);
 		Integer backendResult = -1;
 		try {

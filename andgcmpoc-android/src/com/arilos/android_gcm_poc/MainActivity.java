@@ -1,7 +1,13 @@
 package com.arilos.android_gcm_poc;
 
+import java.io.IOException;
+
+import com.google.android.gms.gcm.GoogleCloudMessaging;
+
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
@@ -23,8 +29,6 @@ import android.widget.EditText;
  */
 public class MainActivity extends Activity {
 
-	public static final String EXTRA_MENSAJE = "com.arilos.android_gcm_poc.MENSAJE";
-	protected static final String PROJECT_NUMBER = "<YOUR-PROJECT-NUMBER>";
 	StringBuilder text = new StringBuilder("");
 	private static MainActivity instance = null;
 	private PocUtil util = PocUtil.getInstance(this);
@@ -70,15 +74,19 @@ public class MainActivity extends Activity {
 				.toString();
 		String domain = ((EditText) findViewById(R.id.domain)).getText()
 				.toString();
-
-		Integer backendResult = util.register(recvr_id, domain);
-
-		startNotificationsActivity(backendResult);
+		NotificationsActivity.startNotificationsActivity(this, -1);
+		backgroundRegister(this, recvr_id, domain);
+		
 	}
-
-	private void startNotificationsActivity(Integer backendResult) {
-		Intent intent = new Intent(this, NotificationsActivity.class);
-		intent.putExtra(EXTRA_MENSAJE, "" + backendResult);
-		startActivity(intent);
+	
+	public AsyncTask<String, Void, String> backgroundRegister(final Context context, final String recvr_id, final String domain) {
+		return new AsyncTask<String, Void, String>() {
+			@Override
+			protected String doInBackground(String... args) {
+				Integer backendResult = util.register(recvr_id, domain);
+				NotificationsActivity.broadcastRegisterStatusChangedMessage(context, backendResult);
+				return domain;
+			}
+		}.execute(null, null, null);
 	}
 }

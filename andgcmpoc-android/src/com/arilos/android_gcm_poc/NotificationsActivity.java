@@ -19,21 +19,47 @@ public class NotificationsActivity extends Activity {
 
 	public static final String NOTIFICATION_CONTENT = "notification_content";
 	public static final String NOTIFICATION_RECEIVED = "notification_received";
+	public static final String REGISTRATION_STATUS = "com.arilos.android_gcm_poc.REGISTRATION_STATUS";
+	public static final String REGISTRATION_STATUS_CHANGED = "REGISTRATION_STATUS_CHANGED";
+
+	private Integer registrationStatus = -1;
+
+	public static void startNotificationsActivity(Context context,
+			Integer backendResult) {
+		Intent intent = new Intent(context, NotificationsActivity.class);
+		intent.putExtra(REGISTRATION_STATUS, "" + backendResult);
+		context.startActivity(intent);
+	}
+	
+	public static void broadcastRegisterStatusChangedMessage(Context context, Integer backendResult) {
+		Intent notificationIntent = new Intent(NotificationsActivity.REGISTRATION_STATUS_CHANGED);
+		notificationIntent.putExtra(NotificationsActivity.REGISTRATION_STATUS, backendResult);
+		LocalBroadcastManager.getInstance(context).sendBroadcast(notificationIntent);
+	}
 
 	@SuppressLint("NewApi")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+
 		LocalBroadcastManager.getInstance(this).registerReceiver(
 				mNotificationReceiver, new IntentFilter(NOTIFICATION_RECEIVED));
 		
+		LocalBroadcastManager.getInstance(this).registerReceiver(
+				mRegistrationStatusChangedReceiver, new IntentFilter(REGISTRATION_STATUS_CHANGED));
+
 		setContentView(R.layout.notifications_activity);
 
 		Intent intent = getIntent();
-		String txt_result = intent.getStringExtra(MainActivity.EXTRA_MENSAJE);
-		Integer result = Integer.valueOf(txt_result);
-		if (result != null && result > 0) {
+		changeRegistrationStatus(intent);
+	}
+
+	private void changeRegistrationStatus(Intent intent) {
+		Integer newRegistrationStatus = intent.getIntExtra(REGISTRATION_STATUS, -1);
+//		String txt_result = intent.getStringExtra(REGISTRATION_STATUS);
+//		Integer newRegistrationStatus = Integer.valueOf(txt_result);
+		registrationStatus = newRegistrationStatus;
+		if (registrationStatus != null && registrationStatus > 0) {
 			Boolean registered_to_sprayer = true;
 			Boolean google_status = true;
 
@@ -42,7 +68,6 @@ public class NotificationsActivity extends Activity {
 			((CheckBox) findViewById(R.id.google_status))
 					.setChecked(google_status);
 		}
-
 	}
 
 	/**
@@ -58,14 +83,14 @@ public class NotificationsActivity extends Activity {
 	@Override
 	public void onResume() {
 		super.onResume();
-//		LocalBroadcastManager.getInstance(this).registerReceiver(
-//				mNotificationReceiver, new IntentFilter(NOTIFICATION_RECEIVED));
+		// LocalBroadcastManager.getInstance(this).registerReceiver(
+		// mNotificationReceiver, new IntentFilter(NOTIFICATION_RECEIVED));
 	}
 
 	@Override
 	public void onPause() {
-//		LocalBroadcastManager.getInstance(this).unregisterReceiver(
-//				mNotificationReceiver);
+		// LocalBroadcastManager.getInstance(this).unregisterReceiver(
+		// mNotificationReceiver);
 		super.onResume();
 	}
 
@@ -78,6 +103,14 @@ public class NotificationsActivity extends Activity {
 			((EditText) findViewById(R.id.notifications_edittext))
 					.append(">> Received notification: \""
 							+ message.getString("hello") + "\"\n");
+		}
+	};
+
+	// handler for received Intents for the REGISTRATION_STATUS_CHANGED event
+	private BroadcastReceiver mRegistrationStatusChangedReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			changeRegistrationStatus(intent);
 		}
 	};
 
