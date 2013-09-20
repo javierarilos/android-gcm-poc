@@ -25,4 +25,5 @@ local.properties
 *.pyo
 dist/
 
-
+# other
+mykeys.txt

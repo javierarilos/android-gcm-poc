@@ -23,15 +23,34 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
+/**
+ * @author javier.arilos
+ * 
+ * For using this code, you will need:
+ * PROJECT_NUMBER : from google, to be able to register, see: http://developer.android.com/google/gcm/gs.html#libs for getting this keys.
+ * SERVER_BASE_URL : is the base URL where your backend is deployed. This URL must be visible from your mobile phone.
+ * 
+ * You will also need some phones registration-id's, which result from the android device register.
+ * sending a gcm message from command line:
+ * curl --header "Authorization:key=<YOUR-AUTHORIZATION-KEY-HERE>" --header "Content-Type:application/json" "https://android.googleapis.com/gcm/send" --data '{"data": { "hello": "android from sprayer 27" }, "registration_ids":["<A-DEVICE-REGISTRATION-ID>"]}'
+ *
+ */
 public class PocUtil {
+	private static final String SERVER_BASE_URL = "";
+	protected static final String PROJECT_NUMBER = "";
+	
 	private static final String PROPERTY_REG_ID = "com.arilos.android_gcm_poc.REG_ID";
 	private static final String PROPERTY_APP_VERSION = "com.arilos.android_gcm_poc.APP_VERSION";
 	private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
-	protected static final String PROJECT_NUMBER = "439693372930";
 	private static final String PROPERTY_RECVR_ID = "com.arilos.android_gcm_poc.RECVR_ID";
 	private static final String PROPERTY_DOMAIN = "com.arilos.android_gcm_poc.DOMAIN";
 	private Context context;
 	private static PocUtil instance;
+	
+	static{
+		if(SERVER_BASE_URL.equals("") || PROJECT_NUMBER.equals(""))
+			throw new RuntimeException("SERVER_BASE_URL && PROJECT_NUMBER must be filled.");
+	}
 
 	public static PocUtil getInstance(Context context) {
 		if (instance == null) {
@@ -73,7 +92,7 @@ public class PocUtil {
 			HttpClient httpclient = new DefaultHttpClient();
 			HttpPost httppost = new HttpPost(
 					String.format(
-							"http://androidgcmpoc-corralito.rhcloud.com/register/%s/%s/%s",
+							SERVER_BASE_URL + "/register/%s/%s/%s",
 							recvr_id, domain, registrationId));
 			StringEntity entity = new StringEntity(String.format(
 					"{\"user\":\"%s\",\"tag\":\"%s\", \"body\":\"%s\"}",

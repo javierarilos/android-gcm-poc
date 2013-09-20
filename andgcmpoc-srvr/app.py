@@ -20,7 +20,20 @@ except IOError:
 # line, it's possible required libraries won't be in your searchable path
 #
 
+
+""" you must fill this AUTHORIZATION_KEY constant with your authorization key in the form:
+    'key=XXXXXXXXXXXX'
+"""
+AUTHORIZATION_KEY = ""
+
+
 if __name__ == '__main__':
+
+    if not AUTHORIZATION_KEY:
+        print "AUTHORIZATION_KEY must be filled. Exiting"
+        import sys
+        sys.exit(1)
+
     ip = os.getenv('OPENSHIFT_PYTHON_IP', '0.0.0.0')
     port = int(os.getenv('OPENSHIFT_PYTHON_PORT', '9898'))
 
@@ -41,14 +54,14 @@ if __name__ == '__main__':
         return recvrs[key(domain, recvr_id)]
 
     # REGISTER RECVR:
-    # curl -v -X POST http://androidgcmpoc-corralito.rhcloud.com/register/do1/re1/to1
+    # curl -v -X POST http://MYSERVER/register/do1/re1/to1
     @app.post("/register/<domain>/<recvr_id>/<token>")
     def post_register(domain, recvr_id, token):
         recvrs[key(domain, recvr_id)] = {'domain': domain, 'recvr_id': recvr_id, 'token': token}
         return {"result": "OK"}
 
     # GET RECVR:
-    # curl -v -X GET http://androidgcmpoc-corralito.rhcloud.com/register/do1/re1
+    # curl -v -X GET http://MYSERVER/register/do1/re1
     @app.get("/register/<domain>/<recvr_id>")
     def get_recvr(domain, recvr_id):
         try:
@@ -58,13 +71,13 @@ if __name__ == '__main__':
             return "Not registered: {}{}{}".format(domain, SEPARATOR, recvr_id)
 
     # GET ALL RECVRS:
-    # curl -v -X GET http://androidgcmpoc-corralito.rhcloud.com/register/
+    # curl -v -X GET http://MYSERVER/register/
     @app.get("/register")
     def get_all_recvrs():
         return str(recvrs.values())
 
     # SEND TO RECVR:
-    # curl -v -X POST -d "pushing around the world" http://androidgcmpoc-corralito.rhcloud.com/send/do1/re1
+    # curl -v -X POST -d "pushing around the world" http://MYSERVER/send/do1/re1
     @app.post("/send/<domain>/<recvr_id>")
     def post_send(domain, recvr_id):
         body = "".join(request.body)
@@ -75,7 +88,7 @@ if __name__ == '__main__':
             body_dict = json.loads(body)
             data = json.dumps({"data": body_dict, "registration_ids": registration_ids})
             r = session.post("https://android.googleapis.com/gcm/send",
-                             headers={"Authorization": "key=AIzaSyAU2xRA8uQLVcH90RRLjay98QCQbybBAzw",
+                             headers={"Authorization": AUTHORIZATION_KEY,
                                       "Content-Type": "application/json"},
                              data=data)
             print("Response from google : status '{}', content '{}' ".format(r.status_code, r.content))

@@ -1,12 +1,7 @@
 package com.arilos.android_gcm_poc;
 
-import java.io.IOException;
-
-import com.google.android.gms.gcm.GoogleCloudMessaging;
-
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
@@ -18,13 +13,7 @@ import android.widget.EditText;
  * @author javier.arilos
  * 
  * For using this code, you will need:
- * PROJECT_NUMBER
- * AUTHORIZATION-KEY
- * see: http://developer.android.com/google/gcm/gs.html#libs for getting this keys.
- * 
- * You will also need some phones registration-id's, which result from the android device register.
- * sending a gcm message from command line:
- * curl --header "Authorization:key=<YOUR-AUTHORIZATION-KEY-HERE>" --header "Content-Type:application/json" "https://android.googleapis.com/gcm/send" --data '{"data": { "hello": "android from sprayer 27" }, "registration_ids":["<A-DEVICE-REGISTRATION-ID>"]}'
+ * PROJECT_NUMBER see PocUtil.
  * 
  */
 public class MainActivity extends Activity {
